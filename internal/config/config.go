@@ -13,9 +13,10 @@ import (
 const DefaultPath = "fuse.yml"
 
 type Config struct {
-	Providers map[string]ProviderConfig `yaml:"providers"`
-	Budgets   BudgetConfig              `yaml:"budgets"`
-	OnHardCap string                    `yaml:"on_hard_cap"`
+	Providers  map[string]ProviderConfig `yaml:"providers"`
+	Budgets    BudgetConfig              `yaml:"budgets"`
+	Estimation EstimationConfig          `yaml:"estimation"`
+	OnHardCap  string                    `yaml:"on_hard_cap"`
 }
 
 type ProviderConfig struct {
@@ -38,6 +39,12 @@ type BudgetConfig struct {
 type Budget struct {
 	Soft float64 `yaml:"soft"`
 	Hard float64 `yaml:"hard"`
+}
+
+type EstimationConfig struct {
+	Mode                string  `yaml:"mode"`
+	OutputRatio         float64 `yaml:"output_ratio"`
+	TypicalOutputTokens int     `yaml:"typical_output_tokens"`
 }
 
 func Load(path string) (*Config, error) {
@@ -81,6 +88,21 @@ func (c *Config) Validate() error {
 	}
 	if c.OnHardCap != "block" && c.OnHardCap != "warn" {
 		return errors.New("on_hard_cap must be block or warn")
+	}
+	if c.Estimation.Mode == "" {
+		c.Estimation.Mode = "max"
+	}
+	if c.Estimation.OutputRatio == 0 {
+		c.Estimation.OutputRatio = 0.3
+	}
+	if c.Estimation.Mode != "max" && c.Estimation.Mode != "typical" {
+		return errors.New("estimation.mode must be max or typical")
+	}
+	if c.Estimation.OutputRatio < 0 || c.Estimation.OutputRatio > 1 {
+		return errors.New("estimation.output_ratio must be between 0 and 1")
+	}
+	if c.Estimation.TypicalOutputTokens < 0 {
+		return errors.New("estimation.typical_output_tokens must be non-negative")
 	}
 	for name, provider := range c.Providers {
 		if provider.BaseURL == "" {
@@ -154,6 +176,14 @@ budgets:
   monthly:
     soft: 500.00
     hard: 1000.00
+
+# Preflight estimation controls hard-cap blocking before provider spend.
+# max uses the request's max output tokens and provides strict no-overage behavior.
+# typical is useful for local tests or looser caps, but can allow boundary overage.
+estimation:
+  mode: max
+  output_ratio: 0.3
+  typical_output_tokens: 150
 
 on_hard_cap: block
 `

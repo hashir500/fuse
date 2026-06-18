@@ -75,6 +75,19 @@ If a hard cap would be exceeded, Fuse returns HTTP 429:
 
 Soft caps print warnings to stderr and continue allowing traffic.
 
+## Preflight Estimates
+
+Fuse blocks before provider spend, so it must estimate request cost before actual response usage is known. The default mode is strict:
+
+```yaml
+estimation:
+  mode: max
+  output_ratio: 0.3
+  typical_output_tokens: 150
+```
+
+`mode: max` uses the request's maximum output tokens and preserves the no-overage hard-stop behavior. For local micro-budget tests, `mode: typical` estimates output as `max_tokens * output_ratio`, capped by `typical_output_tokens`; this is more ergonomic but can allow a boundary overage.
+
 ## Claude Code
 
 ```bash

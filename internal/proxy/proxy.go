@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -47,7 +48,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	estimatedCost, ok := s.estimateCost(reqInfo.Provider, reqInfo.Model, reqInfo.Usage)
+	preflightUsage := cost.PreflightUsage(reqInfo.Usage, s.Config.Estimation)
+	estimatedCost, ok := s.estimateCost(reqInfo.Provider, reqInfo.Model, preflightUsage)
 	if !ok {
 		http.Error(w, fmt.Sprintf("fuse: model %q is not configured for provider %q", reqInfo.Model, reqInfo.Provider), http.StatusBadRequest)
 		return
@@ -57,8 +59,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if os.Getenv("FUSE_DEBUG") == "1" {
+		fmt.Fprintf(s.Stderr, "DEBUG: provider=%s model=%s estimate_mode=%s input=%d requested_output=%d estimated_output=%d estimated_cost=%.6f daily_hard=%.6f\n",
+			reqInfo.Provider,
+			reqInfo.Model,
+			s.Config.Estimation.Mode,
+			reqInfo.Usage.PromptTokens,
+			reqInfo.Usage.CompletionTokens,
+			preflightUsage.CompletionTokens,
+			estimatedCost,
+			s.Config.Budgets.Daily.Hard,
+		)
+	}
 	decision := budget.Check(s.Config.Budgets, spend, estimatedCost, s.Config.OnHardCap)
 	if !decision.Allowed {
+		reqInfo.Usage = preflightUsage
 		s.writeBlocked(w, r.Context(), reqInfo, estimatedCost, *decision.HardHit)
 		return
 	}
@@ -135,8 +150,8 @@ func (s *Server) writeBlocked(w http.ResponseWriter, ctx context.Context, reqInf
 		WasBlocked:       true,
 		BlockReason:      reason,
 	})
-	fmt.Fprintf(s.Stderr, "BLOCKED: %s hard cap ($%.2f) would be exceeded\n   Request cost: $%.2f | Current spend: $%.2f\n",
-		title(hit.Period), hit.CapAmount, hit.RequestCost, hit.CurrentSpend)
+	fmt.Fprintf(s.Stderr, "BLOCKED: %s hard cap (%s) would be exceeded\n   Estimated max request cost: %s | Current spend: %s\n",
+		title(hit.Period), dollars(hit.CapAmount), dollars(hit.RequestCost), dollars(hit.CurrentSpend))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusTooManyRequests)
@@ -162,4 +177,11 @@ func title(value string) string {
 		return value
 	}
 	return strings.ToUpper(value[:1]) + value[1:]
+}
+
+func dollars(value float64) string {
+	if value > 0 && value < 0.01 {
+		return fmt.Sprintf("$%.4f", value)
+	}
+	return fmt.Sprintf("$%.2f", value)
 }
