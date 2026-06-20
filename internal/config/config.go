@@ -108,12 +108,15 @@ func (c *Config) Validate() error {
 		if provider.BaseURL == "" {
 			return fmt.Errorf("provider %q missing base_url", name)
 		}
+		if provider.APIKey == "" {
+			return fmt.Errorf("provider %q missing api_key", name)
+		}
 		if len(provider.Models) == 0 {
 			return fmt.Errorf("provider %q must define at least one model", name)
 		}
 		for model, costs := range provider.Models {
-			if costs.InputCostPer1K < 0 || costs.OutputCostPer1K < 0 {
-				return fmt.Errorf("provider %q model %q costs must be non-negative", name, model)
+			if costs.InputCostPer1K <= 0 || costs.OutputCostPer1K <= 0 {
+				return fmt.Errorf("provider %q model %q costs must be positive", name, model)
 			}
 		}
 	}
