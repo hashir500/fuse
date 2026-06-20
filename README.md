@@ -1,5 +1,9 @@
 # Fuse
 
+<p align="center">
+  <img src="logo.png" alt="Fuse logo" width="160">
+</p>
+
 Fuse is a local CLI proxy that tracks AI API spend and hard-stops requests before they exceed your budget.
 
 ## Quick Start
