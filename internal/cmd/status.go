@@ -47,6 +47,9 @@ func percent(value, max float64) string {
 		return "0%"
 	}
 	pct := (value / max) * 100
+	if pct > 0 && pct < 0.1 {
+		return "<0.1%"
+	}
 	if pct > 0 && pct < 10 {
 		return fmt.Sprintf("%.1f%%", pct)
 	}

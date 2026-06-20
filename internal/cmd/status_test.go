@@ -10,6 +10,7 @@ func TestPercent(t *testing.T) {
 		want  string
 	}{
 		{name: "zero max", value: 1, max: 0, want: "0%"},
+		{name: "less than point one percent", value: 0.00007, max: 100, want: "<0.1%"},
 		{name: "micro spend", value: 0.000011, max: 0.001, want: "1.1%"},
 		{name: "normal spend", value: 12, max: 100, want: "12%"},
 	}

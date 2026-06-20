@@ -165,17 +165,20 @@ providers:
       gemini-2.5-pro:
         input_cost_per_1k: 0.00125
         output_cost_per_1k: 0.010
+      gemini-2.5-flash:
+        input_cost_per_1k: 0.0003
+        output_cost_per_1k: 0.0025
 
 budgets:
   daily:
-    soft: 50.00
-    hard: 100.00
+    soft: 10.00
+    hard: 50.00
   weekly:
+    soft: 50.00
+    hard: 200.00
+  monthly:
     soft: 200.00
     hard: 500.00
-  monthly:
-    soft: 500.00
-    hard: 1000.00
 
 # Preflight estimation controls hard-cap blocking before provider spend.
 # max uses the request's max output tokens and provides strict no-overage behavior.
