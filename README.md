@@ -33,12 +33,23 @@ claude config set apiBaseUrl http://localhost:8787
 
 Cursor or OpenAI-compatible tools: set the API base URL to `http://localhost:8787`.
 
-Useful commands:
+## Commands
 
 ```bash
+fuse init
+fuse proxy
+fuse proxy --addr localhost:8799
 fuse status
 fuse history --limit 10
+fuse config
 fuse config validate
+```
+
+Global output flags:
+
+```bash
+fuse --quiet status       # no Spark mascot/flavor
+fuse --no-mascot status   # hide ASCII art, keep inline messages
 ```
 
 ## Config Example
