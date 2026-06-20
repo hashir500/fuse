@@ -37,8 +37,6 @@ func (p *testProxy) Do(req *http.Request) *httptest.ResponseRecorder {
 }
 
 func TestProxyForwardsRequest(t *testing.T) {
-	t.Parallel()
-
 	proxy := startTestProxy(t, func(r *http.Request) (*http.Response, error) {
 		return jsonResponse(http.StatusOK, `{"ok": true, "usage": {"input_tokens": 1, "output_tokens": 1}}`, r), nil
 	})
@@ -57,8 +55,6 @@ func TestProxyForwardsRequest(t *testing.T) {
 }
 
 func TestProxyPreservesAuthHeaders(t *testing.T) {
-	t.Parallel()
-
 	var receivedHeaders http.Header
 	proxy := startTestProxy(t, func(r *http.Request) (*http.Response, error) {
 		receivedHeaders = r.Header.Clone()
@@ -81,8 +77,6 @@ func TestProxyPreservesAuthHeaders(t *testing.T) {
 }
 
 func TestProxyHardCapBlocksBeforeUpstream(t *testing.T) {
-	t.Parallel()
-
 	upstreamHit := false
 	cfg := anthropicTestConfig()
 	cfg.Budgets.Daily = config.Budget{Hard: 0.001}
@@ -109,8 +103,6 @@ func TestProxyHardCapBlocksBeforeUpstream(t *testing.T) {
 }
 
 func TestProxyLogsActualCost(t *testing.T) {
-	t.Parallel()
-
 	proxy := startTestProxy(t, func(r *http.Request) (*http.Response, error) {
 		return jsonResponse(http.StatusOK, `{"usage": {"input_tokens": 10, "output_tokens": 20}}`, r), nil
 	})
@@ -136,8 +128,6 @@ func TestProxyLogsActualCost(t *testing.T) {
 }
 
 func TestProxySoftCapWarnsButAllows(t *testing.T) {
-	t.Parallel()
-
 	cfg := anthropicTestConfig()
 	cfg.Budgets.Daily = config.Budget{Soft: 0.0001, Hard: 1.00}
 	var stderr bytes.Buffer
@@ -168,8 +158,6 @@ func TestProxySoftCapWarnsButAllows(t *testing.T) {
 }
 
 func TestProxyGeminiUsageParsing(t *testing.T) {
-	t.Parallel()
-
 	cfg := googleTestConfig()
 	proxy := startTestProxyWithConfig(t, cfg, func(r *http.Request) (*http.Response, error) {
 		return jsonResponse(http.StatusOK, `{

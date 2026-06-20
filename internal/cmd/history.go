@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashir500/Fuse/internal/money"
+	"github.com/hashir500/Fuse/internal/spark"
 	"github.com/hashir500/Fuse/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,14 @@ var historyCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if len(logs) == 0 {
+			spark.HistoryEmpty()
+			return nil
+		}
 		out := cmd.OutOrStdout()
+		if art := spark.CompactArt(); art != "" {
+			fmt.Fprintln(out, art)
+		}
 		fmt.Fprintln(out, "TIME              PROVIDER   MODEL                         TOKENS    COST      STATUS")
 		for _, log := range logs {
 			status := "ok"

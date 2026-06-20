@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashir500/Fuse/internal/config"
-	"github.com/hashir500/Fuse/internal/money"
+	"github.com/hashir500/Fuse/internal/spark"
 	"github.com/hashir500/Fuse/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -31,9 +31,12 @@ var statusCmd = &cobra.Command{
 			return err
 		}
 		out := cmd.OutOrStdout()
-		fmt.Fprintf(out, "Today:   %s / %s  %s %s\n", money.Dollars(spend.Daily), money.Dollars(cfg.Budgets.Daily.Hard), bar(spend.Daily, cfg.Budgets.Daily.Hard), percent(spend.Daily, cfg.Budgets.Daily.Hard))
-		fmt.Fprintf(out, "Week:    %s / %s  %s %s\n", money.Dollars(spend.Weekly), money.Dollars(cfg.Budgets.Weekly.Hard), bar(spend.Weekly, cfg.Budgets.Weekly.Hard), percent(spend.Weekly, cfg.Budgets.Weekly.Hard))
-		fmt.Fprintf(out, "Month:   %s / %s  %s %s\n", money.Dollars(spend.Monthly), money.Dollars(cfg.Budgets.Monthly.Hard), bar(spend.Monthly, cfg.Budgets.Monthly.Hard), percent(spend.Monthly, cfg.Budgets.Monthly.Hard))
+		if art := spark.CompactArt(); art != "" {
+			fmt.Fprintln(out, art)
+		}
+		fmt.Fprintln(out, spark.StatusLine(spend.Daily, cfg.Budgets.Daily.Hard, "today", percent(spend.Daily, cfg.Budgets.Daily.Hard), bar(spend.Daily, cfg.Budgets.Daily.Hard)))
+		fmt.Fprintln(out, spark.StatusLine(spend.Weekly, cfg.Budgets.Weekly.Hard, "week", percent(spend.Weekly, cfg.Budgets.Weekly.Hard), bar(spend.Weekly, cfg.Budgets.Weekly.Hard)))
+		fmt.Fprintln(out, spark.StatusLine(spend.Monthly, cfg.Budgets.Monthly.Hard, "month", percent(spend.Monthly, cfg.Budgets.Monthly.Hard), bar(spend.Monthly, cfg.Budgets.Monthly.Hard)))
 		return nil
 	},
 }

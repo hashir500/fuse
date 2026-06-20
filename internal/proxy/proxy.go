@@ -14,8 +14,8 @@ import (
 	"github.com/hashir500/Fuse/internal/budget"
 	"github.com/hashir500/Fuse/internal/config"
 	"github.com/hashir500/Fuse/internal/cost"
-	"github.com/hashir500/Fuse/internal/money"
 	"github.com/hashir500/Fuse/internal/provider"
+	"github.com/hashir500/Fuse/internal/spark"
 	"github.com/hashir500/Fuse/internal/store"
 )
 
@@ -37,6 +37,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.Stderr == nil {
 		s.Stderr = io.Discard
 	}
+	spark.SetOutput(s.Stderr)
 	providerName, ok := provider.Detect(r, s.Config)
 	if !ok {
 		http.Error(w, "fuse: unsupported provider route", http.StatusBadGateway)
@@ -79,7 +80,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, warning := range decision.SoftWarnings {
-		fmt.Fprintf(s.Stderr, "SOFT CAP: %s spend (%s) exceeded. Current: %s\n", title(warning.Period), money.Dollars(warning.Soft), money.Dollars(warning.Spend))
+		spark.SoftCapWarning(warning.Spend, warning.Soft, warning.Period)
 	}
 
 	target, err := provider.TargetURL(providerName, s.Config, r.URL)
@@ -152,8 +153,7 @@ func (s *Server) writeBlocked(w http.ResponseWriter, ctx context.Context, reqInf
 		WasBlocked:       true,
 		BlockReason:      reason,
 	})
-	fmt.Fprintf(s.Stderr, "BLOCKED: %s hard cap (%s) would be exceeded\n   Estimated max request cost: %s | Current spend: %s\n",
-		title(hit.Period), money.Dollars(hit.CapAmount), money.Dollars(hit.RequestCost), money.Dollars(hit.CurrentSpend))
+	spark.HardCapBlocked(hit.RequestCost, hit.CurrentSpend, hit.CapAmount, hit.Period)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusTooManyRequests)

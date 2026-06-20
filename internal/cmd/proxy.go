@@ -1,13 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"time"
 
 	"github.com/hashir500/Fuse/internal/config"
-	"github.com/hashir500/Fuse/internal/money"
 	"github.com/hashir500/Fuse/internal/proxy"
+	"github.com/hashir500/Fuse/internal/spark"
 	"github.com/hashir500/Fuse/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -28,16 +26,7 @@ var proxyCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		spend, err := db.PeriodSpend(cmd.Context(), time.Now())
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Fuse proxy running on %s\n", proxyAddr)
-		fmt.Fprintf(cmd.OutOrStdout(), "   Budgets: %s/%s daily | %s/%s weekly | %s/%s monthly\n",
-			money.Dollars(cfg.Budgets.Daily.Soft), money.Dollars(cfg.Budgets.Daily.Hard),
-			money.Dollars(cfg.Budgets.Weekly.Soft), money.Dollars(cfg.Budgets.Weekly.Hard),
-			money.Dollars(cfg.Budgets.Monthly.Soft), money.Dollars(cfg.Budgets.Monthly.Hard))
-		fmt.Fprintf(cmd.OutOrStdout(), "   Today: %s / %s\n", money.Dollars(spend.Daily), money.Dollars(cfg.Budgets.Daily.Hard))
+		spark.ProxyStarted(proxyAddr)
 
 		server := &proxy.Server{Config: cfg, Store: db, Stderr: os.Stderr}
 		return server.ListenAndServe(proxyAddr)

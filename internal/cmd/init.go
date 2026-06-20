@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/hashir500/Fuse/internal/config"
+	"github.com/hashir500/Fuse/internal/spark"
 	"github.com/hashir500/Fuse/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -26,6 +27,7 @@ var initCmd = &cobra.Command{
 		}
 		defer db.Close()
 		fmt.Fprintln(cmd.OutOrStdout(), "Created .fuse/spend.db")
+		spark.Greet()
 		return nil
 	},
 }
